@@ -85,6 +85,17 @@ export function useAuth(): AuthState & AuthActions {
     setUser(newUser);
     const session: Session = { userId: newUser.id, workspaceId: "" };
     saveSession(session);
+
+    pendo.identify({
+      visitor: {
+        id: newUser.id,
+        full_name: newUser.displayName,
+        username: newUser.username,
+        avatarInitials: newUser.avatarInitials,
+        createdAt: newUser.createdAt,
+        workspaceId: "",
+      },
+    });
   }, []);
 
   const signIn = useCallback(async (username: string, password: string) => {
@@ -104,6 +115,27 @@ export function useAuth(): AuthState & AuthActions {
       workspaceId: activeWorkspace?.id ?? "",
     };
     saveSession(session);
+
+    const pendoOptions: Record<string, unknown> = {
+      visitor: {
+        id: storedUser.id,
+        full_name: storedUser.displayName,
+        username: storedUser.username,
+        avatarInitials: storedUser.avatarInitials,
+        createdAt: storedUser.createdAt,
+        workspaceId: activeWorkspace?.id ?? "",
+      },
+    };
+    if (activeWorkspace) {
+      pendoOptions.account = {
+        id: activeWorkspace.id,
+        name: activeWorkspace.name,
+        currency: activeWorkspace.currency,
+        locale: activeWorkspace.locale,
+        createdAt: activeWorkspace.createdAt,
+      };
+    }
+    pendo.identify(pendoOptions);
   }, []);
 
   const signOut = useCallback(() => {
@@ -116,6 +148,7 @@ export function useAuth(): AuthState & AuthActions {
         userId: userId ?? "unknown",
       });
     }
+    pendo.clearSession();
   }, [user]);
 
   const setActiveWorkspace = useCallback((ws: Workspace) => {
@@ -124,6 +157,16 @@ export function useAuth(): AuthState & AuthActions {
     if (session) {
       saveSession({ ...session, workspaceId: ws.id });
     }
+
+    pendo.identify({
+      account: {
+        id: ws.id,
+        name: ws.name,
+        currency: ws.currency,
+        locale: ws.locale,
+        createdAt: ws.createdAt,
+      },
+    });
   }, []);
 
   const refreshUser = useCallback(async () => {
