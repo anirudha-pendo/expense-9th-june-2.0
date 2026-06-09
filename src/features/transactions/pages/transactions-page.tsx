@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/shared/components/app-layout";
@@ -32,6 +32,25 @@ export function TransactionsPage() {
   const currency = workspace?.currency ?? "USD";
   const locale = workspace?.locale ?? "en-US";
 
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    const hasFilters = filters.search || filters.type !== "all" || filters.categoryId || filters.month;
+    if (!hasFilters) return;
+
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      pendo.track("transactions_searched", {
+        searchQuery: filters.search,
+        filterType: filters.type,
+        filterCategoryId: filters.categoryId,
+        filterMonth: filters.month,
+        resultsCount: String(filteredTransactions.length),
+      });
+    }, 500);
+
+    return () => clearTimeout(searchDebounceRef.current);
+  }, [filters, filteredTransactions.length]);
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       if (filters.search && !tx.description.toLowerCase().includes(filters.search.toLowerCase())) return false;
@@ -48,6 +67,15 @@ export function TransactionsPage() {
   async function handleAdd(values: TransactionFormValues) {
     try {
       await addTransaction({ ...values, workspaceId: workspace!.id, notes: values.notes ?? "" });
+      pendo.track("transaction_added", {
+        transactionType: values.type,
+        amount: String(values.amount),
+        categoryId: values.categoryId,
+        description: values.description,
+        date: values.date,
+        isRecurring: String(values.isRecurring ?? false),
+        workspaceId: workspace!.id,
+      });
       setShowForm(false);
       toast.success("Transaction added");
     } catch {
@@ -65,6 +93,15 @@ export function TransactionsPage() {
         date: values.date,
       };
       await editTransaction(updated);
+      pendo.track("transaction_updated", {
+        transactionId: editingTx.id,
+        transactionType: values.type,
+        amount: String(values.amount),
+        categoryId: values.categoryId,
+        description: values.description,
+        date: values.date,
+        isRecurring: String(values.isRecurring ?? false),
+      });
       setEditingTx(null);
       toast.success("Transaction updated");
     } catch {
@@ -76,6 +113,10 @@ export function TransactionsPage() {
     if (!deletingTx) return;
     try {
       await removeTransaction(deletingTx.id);
+      pendo.track("transaction_deleted", {
+        transactionId: deletingTx.id,
+        transactionDescription: deletingTx.description,
+      });
       setDeletingTx(null);
       toast.success("Transaction deleted");
     } catch {

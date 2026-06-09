@@ -632,5 +632,11 @@ export async function runBot(
     await sleep(randInt(400, 900), abortRef);
   }
 
+  if (typeof pendo !== "undefined") {
+    pendo.track("bot_simulation_completed", {
+      totalActions: String(config.totalActions),
+      usersCreated: String(state.users.length),
+    });
+  }
   log({ type: "done", message: `★ Bot finished — ${config.totalActions} actions, ${state.users.length} user(s) created` });
 }
