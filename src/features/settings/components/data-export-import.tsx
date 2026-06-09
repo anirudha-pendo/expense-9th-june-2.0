@@ -25,6 +25,13 @@ export function DataExportImport() {
       const data = { workspace, transactions, categories, exportedAt: new Date().toISOString() };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       downloadBlob(blob, `expense-tracker-export-${new Date().toISOString().slice(0, 10)}.json`);
+      pendo.track("data_exported_json", {
+        workspaceId: workspace.id,
+        transactionCount: String(transactions.length),
+        categoryCount: String(categories.length),
+        exportedAt: data.exportedAt,
+        fileFormat: "json",
+      });
       toast.success("Exported successfully");
     } catch {
       toast.error("Export failed");
@@ -56,6 +63,11 @@ export function DataExportImport() {
       const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       downloadBlob(blob, `transactions-${new Date().toISOString().slice(0, 10)}.csv`);
+      pendo.track("data_exported_csv", {
+        workspaceId: workspace.id,
+        transactionCount: String(transactions.length),
+        fileFormat: "csv",
+      });
       toast.success("CSV exported successfully");
     } catch {
       toast.error("CSV export failed");
@@ -88,6 +100,12 @@ export function DataExportImport() {
         imported++;
       }
 
+      pendo.track("data_imported", {
+        workspaceId: workspace.id,
+        importedCount: String(imported),
+        fileName: file.name,
+        fileFormat: "json",
+      });
       toast.success(`Imported ${imported} transaction${imported !== 1 ? "s" : ""}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed — check the file format");

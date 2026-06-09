@@ -139,11 +139,17 @@ export function useAuth(): AuthState & AuthActions {
   }, []);
 
   const signOut = useCallback(() => {
+    const userId = user?.id;
     clearSession();
     setUser(null);
     setWorkspace(null);
+    if (typeof pendo !== "undefined") {
+      pendo.track("user_signed_out", {
+        userId: userId ?? "unknown",
+      });
+    }
     pendo.clearSession();
-  }, []);
+  }, [user]);
 
   const setActiveWorkspace = useCallback((ws: Workspace) => {
     setWorkspace(ws);

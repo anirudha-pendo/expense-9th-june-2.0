@@ -158,6 +158,13 @@ export function CategoryManager() {
         isDefault: false,
       };
       await createCategory(cat);
+      pendo.track("category_created", {
+        categoryId: cat.id,
+        categoryName: values.name,
+        color: values.color,
+        scope: values.scope,
+        workspaceId: workspace!.id,
+      });
       await reload();
       setShowForm(false);
       toast.success("Category added");
@@ -170,6 +177,12 @@ export function CategoryManager() {
     if (!editingCat) return;
     try {
       await updateCategory({ ...editingCat, ...values });
+      pendo.track("category_updated", {
+        categoryId: editingCat.id,
+        categoryName: values.name,
+        color: values.color,
+        scope: values.scope,
+      });
       await reload();
       setEditingCat(null);
       toast.success("Category updated");
@@ -182,6 +195,10 @@ export function CategoryManager() {
     if (!deletingCat) return;
     try {
       await deleteCategory(deletingCat.id);
+      pendo.track("category_deleted", {
+        categoryId: deletingCat.id,
+        categoryName: deletingCat.name,
+      });
       await reload();
       setDeletingCat(null);
       toast.success("Category deleted");
