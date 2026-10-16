@@ -91,9 +91,7 @@ export function useAuth(): AuthState & AuthActions {
         id: newUser.id,
         full_name: newUser.displayName,
         username: newUser.username,
-        avatarInitials: newUser.avatarInitials,
         createdAt: newUser.createdAt,
-        workspaceId: "",
       },
     });
   }, []);
@@ -121,9 +119,7 @@ export function useAuth(): AuthState & AuthActions {
         id: storedUser.id,
         full_name: storedUser.displayName,
         username: storedUser.username,
-        avatarInitials: storedUser.avatarInitials,
         createdAt: storedUser.createdAt,
-        workspaceId: activeWorkspace?.id ?? "",
       },
     };
     if (activeWorkspace) {
