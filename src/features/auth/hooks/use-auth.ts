@@ -96,6 +96,13 @@ export function useAuth(): AuthState & AuthActions {
         workspaceId: "",
       },
     });
+
+    // Track successful account creation
+    pendo.track("Account created", {
+      username: newUser.username,
+      display_name: newUser.displayName,
+      created_at: newUser.createdAt,
+    });
   }, []);
 
   const signIn = useCallback(async (username: string, password: string) => {
